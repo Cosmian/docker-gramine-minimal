@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install --no-install-recommends -qq -y \
   libsgx-epid \
   libsgx-dcap-ql \
   libsgx-dcap-default-qpl \
+  sgx-aesm-service \
   && rm -rf /var/lib/apt/lists/*
 
 # SGX SDK is installed in /opt/intel directory.
