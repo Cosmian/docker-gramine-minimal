@@ -60,8 +60,8 @@ RUN wget https://download.01.org/intel-sgx/sgx-linux/2.15.1/distro/ubuntu20.04-s
 WORKDIR /root
 
 COPY python/Makefile python/python.manifest.template python/enclave-test-key.pem /root/
-COPY python/scripts/hello.py /root/scripts/hello.py
+COPY python/scripts/hello.py python/scripts/args /root/scripts/
 
 RUN make SGX=1 DEBUG=1
 
-ENTRYPOINT ["gramine-sgx", "./python", "scripts/hello.py"]
+ENTRYPOINT ["gramine-sgx", "./python"]

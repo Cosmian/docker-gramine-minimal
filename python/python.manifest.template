@@ -1,13 +1,11 @@
-loader.preload = "file:{{ gramine.libos }}"
+loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ entrypoint }}"
 loader.log_level = "{{ log_level }}"
 
 loader.env.LD_LIBRARY_PATH = "{{ python.stdlib }}/lib:/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
 loader.env.PYTHONDONTWRITEBYTECODE = "1"
 
-loader.insecure__use_cmdline_argv = true
-
-sys.enable_sigterm_injection = true
+loader.argv_src_file = "file:scripts/args"
 
 loader.pal_internal_mem_size = "128M"
 
@@ -44,9 +42,7 @@ fs.mount.locallib.path = "/usr/local/lib"
 fs.mount.locallib.uri  = "file:/usr/local/lib"
 
 sgx.nonpie_binary = true
-sgx.remote_attestation = true
-sgx.ra_client_linkable = true
-sgx.ra_client_spid = "9B9C4217065023E0FC0DAFD2D00049C2"
+sgx.remote_attestation = false
 sgx.enclave_size = "4G"
 sgx.thread_num = 256
 
@@ -77,5 +73,6 @@ sgx.trusted_files = [
   "file:/usr/bin/uname",
   "file:/usr/lib/ssl/openssl.cnf",
   "file:/usr/share/zoneinfo/UTC",
-  "file:scripts/hello.py"
+  "file:scripts/hello.py",
+  "file:scripts/args",
 ]
