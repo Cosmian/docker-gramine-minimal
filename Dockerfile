@@ -9,17 +9,11 @@ ENV LC_ALL C.UTF-8
 WORKDIR /root
 
 RUN apt-get update && apt-get install --no-install-recommends -qq -y \
-  wget \
-  unzip \
+  build-essential \
   protobuf-compiler \
   libprotobuf-dev \
   libprotobuf-c-dev \
-  build-essential \
-  cmake \
-  pkg-config \
-  gdb \
   python3 \
-  git \
   gnupg \
   ca-certificates \
   curl \
@@ -32,7 +26,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] htt
   && curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg 
 
 RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
-  && wget -qO - https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
+  && curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
 
 RUN apt-get update && apt-get install --no-install-recommends -qq -y \
   gramine \
@@ -52,7 +46,7 @@ WORKDIR /opt/intel
 ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.15.101.1.bin
 
 # Install SGX SDK
-RUN wget https://download.01.org/intel-sgx/sgx-linux/2.15.1/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
+RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/2.15.1/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
   && chmod +x  $SGX_SDK_INSTALLER \
   && echo "yes" | ./$SGX_SDK_INSTALLER \
   && rm $SGX_SDK_INSTALLER
