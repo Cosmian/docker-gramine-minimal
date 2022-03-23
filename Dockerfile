@@ -56,6 +56,4 @@ WORKDIR /root
 COPY python/Makefile python/python.manifest.template python/enclave-test-key.pem /root/
 COPY python/scripts/hello.py python/scripts/args /root/scripts/
 
-RUN make SGX=1 DEBUG=1
-
-ENTRYPOINT ["gramine-sgx", "./python"]
+ENTRYPOINT ["make SGX=1 DEBUG=1 && gramine-sgx ./python"]
