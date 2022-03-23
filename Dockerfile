@@ -53,7 +53,7 @@ RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/2
 
 WORKDIR /root
 
-COPY python/Makefile python/python.manifest.template python/enclave-test-key.pem /root/
+COPY python/build_and_run.sh python/Makefile python/python.manifest.template python/enclave-test-key.pem /root/
 COPY python/scripts/hello.py python/scripts/args /root/scripts/
 
-ENTRYPOINT ["make SGX=1 DEBUG=1 && gramine-sgx ./python"]
+ENTRYPOINT ["./build_and_run.sh"]
