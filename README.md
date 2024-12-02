@@ -15,4 +15,3 @@ $ sudo docker build . -t gramine-minimal
 ```console
 $ sudo docker run --device /dev/sgx_enclave --device /dev/sgx_provision -v /var/run/aesmd:/var/run/aesmd/ -it gramine-minimal
 ```
-

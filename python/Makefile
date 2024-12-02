@@ -1,7 +1,6 @@
 ARCH_LIBDIR ?= /lib/$(shell $(CC) -dumpmachine)
 
-SGX_SIGNER_KEY ?= enclave-test-key.pem
-
+SGX_SIGNER_KEY ?= $(HOME)/.config/gramine/enclave-key.pem
 ifeq ($(DEBUG),1)
 GRAMINE_LOG_LEVEL = debug
 else
@@ -11,13 +10,14 @@ endif
 .PHONY: all
 all: python.manifest
 ifeq ($(SGX),1)
-all: python.manifest.sgx python.sig python.token
+all: python.manifest.sgx python.sig
 endif
 
 %.manifest: %.manifest.template
 	gramine-manifest \
 		-Dlog_level=$(GRAMINE_LOG_LEVEL) \
 		-Darch_libdir=$(ARCH_LIBDIR) \
+		-Denclave_size=$(ENCLAVE_SIZE) \
 		-Dentrypoint=$(realpath $(shell sh -c "command -v python3")) \
 		$< > $@
 
@@ -34,9 +34,6 @@ sgx_outputs: python.manifest
 		--key $(SGX_SIGNER_KEY) \
 		--output python.manifest.sgx \
 		--manifest python.manifest
-
-%.token: %.sig
-	gramine-sgx-get-token --output $@ --sig $<
 
 .PHONY: clean
 clean:
