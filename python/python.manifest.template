@@ -2,77 +2,46 @@ loader.entrypoint = "file:{{ gramine.libos }}"
 libos.entrypoint = "{{ entrypoint }}"
 loader.log_level = "{{ log_level }}"
 
-loader.env.LD_LIBRARY_PATH = "{{ python.stdlib }}/lib:/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.LD_LIBRARY_PATH = "/lib:/usr/lib:{{ arch_libdir }}:/usr/{{ arch_libdir }}"
+loader.env.PYTHONPATH = "/usr/local/lib/python3.10/site-packages"
 loader.env.PYTHONDONTWRITEBYTECODE = "1"
+loader.env.PYTHONPYCACHEPREFIX = "/tmp"
+loader.env.PYTHONUNBUFFERED = "1"
+loader.env.TMP_PATH = "/tmp"
+loader.env.HOME = "/root"
 
-loader.argv_src_file = "file:scripts/args"
+loader.argv_src_file = "file:args"
 
-loader.pal_internal_mem_size = "128M"
+sys.enable_extra_runtime_domain_names_conf = true
+sys.disallow_subprocesses = true
 
-fs.mount.lib.type = "chroot"
-fs.mount.lib.path = "/lib"
-fs.mount.lib.uri = "file:{{ gramine.runtimedir() }}/"
+fs.mounts = [
+  { path = "/lib", uri = "file:{{ gramine.runtimedir() }}" },
+  { path = "{{ arch_libdir }}", uri = "file:{{ arch_libdir }}" },
+  { path = "{{ entrypoint }}", uri = "file:{{ entrypoint }}" },
+  { path = "{{ python.stdlib }}", uri = "file:{{ python.stdlib }}" },
+  { path = "/usr/local/lib/python3.10", uri = "file:{{ env.get('GRAMINE_VENV', '/usr/local') }}/lib/python3.10" },
+  { path = "/tmp", type = "tmpfs" },
+]
 
-fs.mount.lib2.type = "chroot"
-fs.mount.lib2.path = "{{ arch_libdir }}"
-fs.mount.lib2.uri = "file:{{ arch_libdir }}"
-
-fs.mount.usr.type = "chroot"
-fs.mount.usr.path = "/usr"
-fs.mount.usr.uri = "file:/usr"
-
-fs.mount.etc.type = "chroot"
-fs.mount.etc.path = "/etc"
-fs.mount.etc.uri = "file:/etc"
-
-fs.mount.tmp.type = "chroot"
-fs.mount.tmp.path = "/tmp"
-fs.mount.tmp.uri = "file:/tmp"
-
-fs.mount.pyhome.type = "chroot"
-fs.mount.pyhome.path = "{{ python.stdlib }}"
-fs.mount.pyhome.uri = "file:{{ python.stdlib }}"
-
-fs.mount.pydisthome.type = "chroot"
-fs.mount.pydisthome.path = "{{ python.distlib }}"
-fs.mount.pydisthome.uri = "file:{{ python.distlib }}"
-
-fs.mount.locallib.type = "chroot"
-fs.mount.locallib.path = "/usr/local/lib"
-fs.mount.locallib.uri  = "file:/usr/local/lib"
-
-sgx.nonpie_binary = true
-sgx.remote_attestation = false
-sgx.enclave_size = "4G"
-sgx.thread_num = 256
+sgx.remote_attestation = "dcap"
+sgx.enclave_size = "{{ enclave_size }}"
+sgx.max_threads = 256
+sgx.isvprodid = 1
+sgx.isvsvn = 10
 
 sgx.trusted_files = [
   "file:{{ entrypoint }}",
+  "file:{{ gramine.libos }}",
   "file:{{ gramine.runtimedir() }}/",
   "file:{{ arch_libdir }}/",
   "file:/usr/{{ arch_libdir }}/",
   "file:{{ python.stdlib }}/",
-  "file:{{ python.distlib }}/",
-  "file:{{ python.get_path('stdlib', vars={'installed_base': '/usr/local'}) }}/",
-  "file:/etc/apt/apt.conf.d/",
-  "file:/etc/nsswitch.conf",
-  "file:/etc/group",
-  "file:/etc/passwd",
-  "file:/etc/host.conf",
-  "file:/etc/hosts",
-  "file:/etc/gai.conf",
-  "file:/etc/resolv.conf",
-  "file:/etc/fstab",
+  "file:{{ env.get('GRAMINE_VENV', '/usr/local') }}/lib/python3.10/",
   "file:/etc/localtime",
-  "file:/usr/share/dpkg/cputable",
-  "file:/usr/share/dpkg/tupletable",
-  "file:/usr/bin/gcc",
-  "file:/usr/bin/ld",
-  "file:/usr/bin/as",
-  "file:/usr/bin/objdump",
-  "file:/usr/bin/uname",
-  "file:/usr/lib/ssl/openssl.cnf",
+  "file:/etc/mime.types",
   "file:/usr/share/zoneinfo/UTC",
-  "file:scripts/hello.py",
-  "file:scripts/args",
+  "file:{{ env.get('GRAMINE_VENV', '/usr/local') }}/bin/cenclave-bootstrap",
+  "file:args",
+  "file:{{ app_dir }}/",
 ]

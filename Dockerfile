@@ -1,61 +1,61 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 USER root
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TS=Etc/UTC
-ENV LANG C.UTF-8
-ENV LC_ALL C.UTF-8
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPYCACHEPREFIX=/tmp
+ENV PYTHONUNBUFFERED=1
+
+RUN echo 'APT::Install-Suggests "0";' >> /etc/apt/apt.conf.d/00-docker
+RUN echo 'APT::Install-Recommends "0";' >> /etc/apt/apt.conf.d/00-docker
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    pkg-config \
+    curl \
+    python3 \
+    python3-pip \
+    python3-venv \
+    gnupg \
+    ca-certificates \
+    curl \
+    tzdata \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+
+# Gramine APT repository
+RUN curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ jammy main" \
+    | tee /etc/apt/sources.list.d/gramine.list
+
+# Intel SGX APT repository
+RUN curl -fsSLo /usr/share/keyrings/intel-sgx-deb.asc https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-sgx-deb.asc] https://download.01.org/intel-sgx/sgx_repo/ubuntu jammy main" \
+    | tee /etc/apt/sources.list.d/intel-sgx.list
+
+# Install Intel SGX dependencies and Gramine
+RUN apt-get update && apt-get install -y \
+    libsgx-launch \
+    libsgx-urts \
+    libsgx-quote-ex \
+    libsgx-epid \
+    libsgx-dcap-ql \
+    libsgx-dcap-quote-verify \
+    linux-base-sgx \
+    libsgx-dcap-default-qpl \
+    libsgx-aesm-quote-ex-plugin \
+    gramine && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /root
 
-RUN apt-get update && apt-get install --no-install-recommends -qq -y \
-  build-essential \
-  protobuf-compiler \
-  libprotobuf-dev \
-  libprotobuf-c-dev \
-  python3 \
-  gnupg \
-  ca-certificates \
-  curl \
-  tzdata \
-  && apt-get -y -q upgrade \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gramine-keyring.gpg] https://packages.gramineproject.io/ stable main" >> /etc/apt/sources.list.d/gramine.list \
-  && curl -fsSLo /usr/share/keyrings/gramine-keyring.gpg https://packages.gramineproject.io/gramine-keyring.gpg 
-
-RUN echo "deb [arch=amd64] https://download.01.org/intel-sgx/sgx_repo/ubuntu focal main" >> /etc/apt/sources.list.d/intel-sgx.list \
-  && curl -fsSL https://download.01.org/intel-sgx/sgx_repo/ubuntu/intel-sgx-deb.key | apt-key add -
-
-RUN apt-get update && apt-get install --no-install-recommends -qq -y \
-  gramine \
-  libsgx-launch \
-  libsgx-urts \
-  libsgx-quote-ex \
-  libsgx-epid \
-  libsgx-dcap-ql \
-  libsgx-dcap-default-qpl \
-  sgx-aesm-service \
-  libsgx-aesm-quote-ex-plugin \
-  && rm -rf /var/lib/apt/lists/*
-
-# SGX SDK is installed in /opt/intel directory.
-WORKDIR /opt/intel
-
-ARG SGX_SDK_INSTALLER=sgx_linux_x64_sdk_2.15.101.1.bin
-
-# Install SGX SDK
-RUN curl -fsSLo $SGX_SDK_INSTALLER https://download.01.org/intel-sgx/sgx-linux/2.15.1/distro/ubuntu20.04-server/$SGX_SDK_INSTALLER \
-  && chmod +x  $SGX_SDK_INSTALLER \
-  && echo "yes" | ./$SGX_SDK_INSTALLER \
-  && rm $SGX_SDK_INSTALLER
-
-WORKDIR /root
-
-COPY python/Makefile python/python.manifest.template python/enclave-test-key.pem /root/
+COPY python/Makefile python/python.manifest.template /root/
 COPY python/scripts/hello.py python/scripts/args /root/scripts/
 
-RUN make SGX=1 DEBUG=1
+RUN openssl genrsa -3 -out /root/.config/gramine/enclave-key.pem 3072
+RUN make SGX=1 DEBUG=1 ENCLAVE_SIZE=4G
 
 ENTRYPOINT ["gramine-sgx", "./python"]
